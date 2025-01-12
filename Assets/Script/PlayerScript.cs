@@ -6,12 +6,13 @@ public class PlayerScript : MonoBehaviour
 {
     public float rollSpeed = 2.0f; // 플레이어가 한 칸 구르는 속도
     private bool isRolling = false; // 플레이어가 현재 구르고 있는지 확인
+    private bool isJumping = false;
 
     private Vector3 targetPosition; // 목표 위치
     private Quaternion targetRotation; // 목표 회전
 
     public LayerMask groundLayer; // 바닥 레이어 지정 (Inspector에서 설정)
-    private float gravity = 9.8f; // 중력 값
+    private float gravity = 1f; // 중력 값
 
     public GameObject effectPrefab; // 이펙트 프리팹 (Inspector에서 연결)
 
@@ -22,7 +23,7 @@ public class PlayerScript : MonoBehaviour
 
     void Update()
     {
-        if (isRolling) return; // 구르는 중일 때는 입력 차단
+        if (isRolling && isJumping) return; // 구르는 중일 때는 입력 차단
 
         // QEZC 키 입력 감지 및 이동
         if (Input.GetKeyDown(KeyCode.Q)) Roll(Vector3.forward); // Z축 + 방향
@@ -49,24 +50,36 @@ public class PlayerScript : MonoBehaviour
         StartCoroutine(RollCoroutine(pivotPoint, axis));
     }
 
-    Vector3 CalculatePivotPoint(Vector3 direction) 
+    Vector3 CalculatePivotPoint(Vector3 direction)
     {
-        return transform.position + new Vector3(
-            direction.x * 0.5f,
-            gravity > 0 ? -0.5f : 0.5f,
-            direction.z * 0.5f
-        );
+        if (isJumping)
+        {
+            return transform.position + new Vector3(
+                direction.x * 0.5f,
+                gravity > 0 ? -0.25f : 0.25f,
+                direction.z * 0.5f
+            ) + direction * 0.5f;
+        }
+        else
+        {
+            return transform.position + new Vector3(
+                direction.x * 0.5f,
+                gravity > 0 ? -0.5f : 0.5f,
+                direction.z * 0.5f
+            );
+        }
     }
 
     System.Collections.IEnumerator RollCoroutine(Vector3 pivotPoint, Vector3 axis)
     {
         float rollAngle = 0;
+        float targetAngle = isJumping ? 135 : 90; // isJumping이면 180도, 아니면 90도
 
-        while (rollAngle < 90)
+        while (rollAngle < targetAngle)
         {
             float angleStep = rollSpeed * Time.deltaTime * 90; // 프레임 당 회전각
             rollAngle += angleStep;
-            if (rollAngle > 90) angleStep -= (rollAngle - 90);
+            if (rollAngle > targetAngle) angleStep -= (rollAngle - targetAngle);
 
             transform.RotateAround(pivotPoint, axis, angleStep);
 
@@ -75,8 +88,9 @@ public class PlayerScript : MonoBehaviour
 
         // 이동 완료 후 위치 및 회전 보정
         AlignToGrid();
-        //이펙트 생성
+        // 이펙트 생성
         SpawnEffect(transform.position);
+
         isRolling = false;
     }
     void AlignToGrid()
@@ -129,12 +143,24 @@ public class PlayerScript : MonoBehaviour
             AlignToGrid();
         }
     }
+    private void OnCollisionEnter(Collision collision)
+    {
+        // floor 레이어와 충돌 시 jumpCount 초기화
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Ground"))
+        {
+            isJumping = false;
+        }
+    }
     private void OnTriggerEnter(Collider other)
     {
         // GravityItem 태그를 가진 오브젝트와 충돌 시
         if (other.CompareTag("GravityItem"))
         {
             gravity = -gravity;
+        }
+        if (other.CompareTag("JumpItem"))
+        {
+            isJumping = true;
         }
     }
 }

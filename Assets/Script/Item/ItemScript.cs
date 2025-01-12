@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class ItemScript : MonoBehaviour
 {
+    public GameObject GravityItemEffect;
     // Start is called before the first frame update
     void Start()
     {
@@ -14,5 +15,13 @@ public class ItemScript : MonoBehaviour
     void Update()
     {
         
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        // GravityItem 태그를 가진 오브젝트와 충돌 시
+        if (other.CompareTag("Player"))
+        {
+            GravityItemEffect.SetActive(true);
+        }
     }
 }
