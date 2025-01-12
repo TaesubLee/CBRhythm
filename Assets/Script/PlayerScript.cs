@@ -13,6 +13,8 @@ public class PlayerScript : MonoBehaviour
     public LayerMask groundLayer; // 바닥 레이어 지정 (Inspector에서 설정)
     public float gravity = 9.8f; // 중력 값
 
+    public GameObject effectPrefab; // 이펙트 프리팹 (Inspector에서 연결)
+
     void Start()
     {
         AlignToGrid(); // 초기 위치 정렬
@@ -73,6 +75,8 @@ public class PlayerScript : MonoBehaviour
 
         // 이동 완료 후 위치 및 회전 보정
         AlignToGrid();
+        //이펙트 생성
+        SpawnEffect(transform.position);
         isRolling = false;
     }
     void AlignToGrid()
@@ -86,6 +90,19 @@ public class PlayerScript : MonoBehaviour
 
         // 회전을 초기 상태로 강제
         transform.rotation = Quaternion.identity;
+    }
+    void SpawnEffect(Vector3 position)
+    {
+        // 이펙트를 바닥에 위치하도록 Y 좌표를 고정
+        Vector3 effectPosition = new Vector3(
+            position.x,         // X 좌표는 플레이어의 X 위치
+            0.51f,               // Y 좌표를 바닥 높이로 고정 (0.5f)
+            position.z          // Z 좌표는 플레이어의 Z 위치
+        );
+
+        // 이동한 위치에 이펙트를 생성
+        GameObject effect = Instantiate(effectPrefab, effectPosition, Quaternion.Euler(90, 0, 0));
+        Destroy(effect, 1.0f); // 이펙트가 1초 후 자동으로 삭제되도록 설정
     }
 
     // 0.5 단위로 위치를 정렬하는 함수
