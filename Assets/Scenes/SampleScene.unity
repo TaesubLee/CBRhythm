@@ -3683,9 +3683,9 @@ PrefabInstance:
       value: Player
       objectReference: {fileID: 0}
     - target: {fileID: 5239982679237978608, guid: 0746230f1f8a6004999dae9dafe60f96, type: 3}
-      propertyPath: gravity
-      value: 9.8
-      objectReference: {fileID: 0}
+      propertyPath: effectPrefab
+      value: 
+      objectReference: {fileID: 2463540216908152988, guid: c8e4e6ca30177f747a8646eb28065d7d, type: 3}
     - target: {fileID: 6491381304502787211, guid: 0746230f1f8a6004999dae9dafe60f96, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.5
