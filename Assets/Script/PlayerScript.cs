@@ -12,7 +12,7 @@ public class PlayerScript : MonoBehaviour
     private Quaternion targetRotation; // 목표 회전
 
     public LayerMask groundLayer; // 바닥 레이어 지정 (Inspector에서 설정)
-    private float gravity = 1f; // 중력 값
+    private float gravity = 9.8f; // 중력 값
 
     public GameObject effectPrefab; // 이펙트 프리팹 (Inspector에서 연결)
 
@@ -56,7 +56,7 @@ public class PlayerScript : MonoBehaviour
         {
             return transform.position + new Vector3(
                 direction.x * 0.5f,
-                gravity > 0 ? -0.25f : 0.25f,
+                gravity > 0 ? -0.5f : 0.5f,
                 direction.z * 0.5f
             ) + direction * 0.5f;
         }
@@ -148,7 +148,7 @@ public class PlayerScript : MonoBehaviour
         // floor 레이어와 충돌 시 jumpCount 초기화
         if (collision.gameObject.layer == LayerMask.NameToLayer("Ground"))
         {
-            isJumping = false;
+            gravity = gravity > 0 ? 9.8f : -9.8f;
         }
     }
     private void OnTriggerEnter(Collider other)
@@ -157,10 +157,17 @@ public class PlayerScript : MonoBehaviour
         if (other.CompareTag("GravityItem"))
         {
             gravity = -gravity;
+            gravity = gravity > 0 ? 1.0f : -1.0f;
         }
         if (other.CompareTag("JumpItem"))
         {
             isJumping = true;
+            StartCoroutine(JumpReset());
         }
+    }
+    IEnumerator JumpReset()
+    {
+        yield return new WaitForSeconds(1f);
+        isJumping = false;
     }
 }
