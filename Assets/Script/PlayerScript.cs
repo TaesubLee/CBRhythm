@@ -11,7 +11,7 @@ public class PlayerScript : MonoBehaviour
     private Quaternion targetRotation; // 목표 회전
 
     public LayerMask groundLayer; // 바닥 레이어 지정 (Inspector에서 설정)
-    public float gravity = 9.8f; // 중력 값
+    private float gravity = 9.8f; // 중력 값
 
     void Start()
     {
@@ -41,7 +41,7 @@ public class PlayerScript : MonoBehaviour
 
         // 목표 위치 및 회전 계산
         targetPosition = transform.position + direction;
-        Vector3 axis = Vector3.Cross(Vector3.up, direction); // 회전 축 계산
+        Vector3 axis = Vector3.Cross(gravity > 0 ? Vector3.up : Vector3.down, direction); // 회전 축 계산
         Vector3 pivotPoint = CalculatePivotPoint(direction); // 회전 중심 계산
 
         StartCoroutine(RollCoroutine(pivotPoint, axis));
@@ -51,7 +51,7 @@ public class PlayerScript : MonoBehaviour
     {
         return transform.position + new Vector3(
             direction.x * 0.5f,
-            -0.5f,
+            gravity > 0 ? -0.5f : 0.5f,
             direction.z * 0.5f
         );
     }
@@ -98,7 +98,7 @@ public class PlayerScript : MonoBehaviour
     private bool IsOnGround()
     {
         // 바닥 감지 (Raycast 활용)
-        return Physics.Raycast(transform.position, Vector3.down, 1f, groundLayer);
+        return Physics.Raycast(transform.position, gravity > 0 ? Vector3.down : Vector3.up, 1f, groundLayer);
     }
 
     void ApplyGravity()
@@ -110,6 +110,14 @@ public class PlayerScript : MonoBehaviour
         if (IsOnGround())
         {
             AlignToGrid();
+        }
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        // GravityItem 태그를 가진 오브젝트와 충돌 시
+        if (other.CompareTag("GravityItem"))
+        {
+            gravity = -gravity;
         }
     }
 }
