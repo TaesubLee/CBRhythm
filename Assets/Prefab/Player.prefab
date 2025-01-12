@@ -63,7 +63,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: aefb9ae179bb4ec46be79004d06060a6, type: 2}
+  - {fileID: 2100000, guid: 750243cc895d69c4ebbc0bf6b63774cb, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -122,4 +122,4 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 128
-  gravity: 9.8
+  effectPrefab: {fileID: 0}
