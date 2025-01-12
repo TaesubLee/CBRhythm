@@ -49,7 +49,7 @@ public class PlayerScript : MonoBehaviour
         StartCoroutine(RollCoroutine(pivotPoint, axis));
     }
 
-    Vector3 CalculatePivotPoint(Vector3 direction)
+    Vector3 CalculatePivotPoint(Vector3 direction) 
     {
         return transform.position + new Vector3(
             direction.x * 0.5f,
@@ -96,7 +96,7 @@ public class PlayerScript : MonoBehaviour
         // 이펙트를 바닥에 위치하도록 Y 좌표를 고정
         Vector3 effectPosition = new Vector3(
             position.x,         // X 좌표는 플레이어의 X 위치
-            gravity > 0 ? 0.51f : 3.51f,               // Y 좌표를 바닥 높이로 고정 (0.5f)
+            gravity > 0 ? 0.51f : 4.51f,               // Y 좌표를 바닥 높이로 고정 (0.5f)
             position.z          // Z 좌표는 플레이어의 Z 위치
         );
 
