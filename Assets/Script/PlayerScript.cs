@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class PlayerScript : MonoBehaviour
 {
+    public static PlayerScript instance;
+
     public float rollSpeed = 2.0f; // 플레이어가 한 칸 구르는 속도
     private bool isRolling = false; // 플레이어가 현재 구르고 있는지 확인
     private bool isJumping = false;
@@ -18,6 +20,17 @@ public class PlayerScript : MonoBehaviour
 
     public GameObject effectPrefab; // 이펙트 프리팹 (Inspector에서 연결)
 
+    private bool isGravityTiming = false; // 중력타이머가 동작 중인지 확인
+    private float gravityStartTime;      // 시작 시간 기록
+    private float gravityChangeTime;
+
+    public int jumpCount = 0;
+
+    private void Awake()
+    {
+        instance = this;
+    }
+
     void Start()
     {
         AlignToGrid(); // 초기 위치 정렬
@@ -25,7 +38,15 @@ public class PlayerScript : MonoBehaviour
 
     void Update()
     {
-        if (isRolling && isJumping) return; // 구르는 중일 때는 입력 차단
+        // 중력 타이머가 활성화된 동안 ApplyGravity()를 계속 호출
+        if (isGravityTiming)
+        {
+            ApplyGravity();
+            return;
+        }
+
+        if (isGravityTiming || isRolling || !RhythmManager.instance.CanInput()) return;
+
         if (isCamera)
         {
             // QEZC 키 입력 감지 및 이동
@@ -36,13 +57,36 @@ public class PlayerScript : MonoBehaviour
         }
         else
         {
-            // QEZC 키 입력 감지 및 이동
+            if (isJumping)
+            {
+                // QEZC 키 입력 감지 및 이동
+                if (Input.GetKeyDown(KeyCode.Q))
+                {
+                    jumpCount++;
+                    Jump(Vector3.forward); // Z축 + 방향
+                }
+                else if (Input.GetKeyDown(KeyCode.E))
+                {
+                    jumpCount++;
+                    Jump(Vector3.right); // X축 + 방향
+                }
+                else if (Input.GetKeyDown(KeyCode.Z))
+                {
+                    jumpCount++;
+                    Jump(Vector3.left);
+                } // X축 - 방향
+                else if (Input.GetKeyDown(KeyCode.C)) {
+                    jumpCount++;
+                    Jump(Vector3.back);
+                } // Z축 - 방향
+            }
+                                                                          
             if (Input.GetKeyDown(KeyCode.Q)) Roll(Vector3.forward); // Z축 + 방향
             else if (Input.GetKeyDown(KeyCode.E)) Roll(Vector3.right); // X축 + 방향
             else if (Input.GetKeyDown(KeyCode.Z)) Roll(Vector3.left); // X축 - 방향
             else if (Input.GetKeyDown(KeyCode.C)) Roll(Vector3.back); // Z축 - 방향
         }
-
+        
         // 중력 처리
         if (!IsOnGround())
         {
@@ -54,6 +98,9 @@ public class PlayerScript : MonoBehaviour
     {
         isRolling = true;
 
+        // 입력 발생 기록
+        RhythmManager.instance.RecordInput();
+
         // 목표 위치 및 회전 계산
         targetPosition = transform.position + direction;
         Vector3 axis = Vector3.Cross(gravity > 0 ? Vector3.up : Vector3.down, direction); // 회전 축 계산
@@ -62,13 +109,26 @@ public class PlayerScript : MonoBehaviour
         StartCoroutine(RollCoroutine(pivotPoint, axis));
     }
 
+    void Jump(Vector3 direction)
+    {
+        // 입력 발생 기록
+        RhythmManager.instance.RecordInput();
+
+        // 목표 위치 및 회전 계산
+        targetPosition = transform.position + direction;
+        Vector3 axis = Vector3.Cross(gravity > 0 ? Vector3.up : Vector3.down, direction); // 회전 축 계산
+        Vector3 pivotPoint = CalculatePivotPoint(direction); // 회전 중심 계산
+
+        StartCoroutine(JumpCoroutine(pivotPoint, axis));
+    }
+
     Vector3 CalculatePivotPoint(Vector3 direction)
     {
         if (isJumping)
         {
             return transform.position + new Vector3(
                 direction.x * 0.5f,
-                gravity > 0 ? -0.5f : 0.5f,
+                gravity > 0 ? -0.25f : 0.25f,
                 direction.z * 0.5f
             ) + direction * 0.5f;
         }
@@ -85,7 +145,7 @@ public class PlayerScript : MonoBehaviour
     System.Collections.IEnumerator RollCoroutine(Vector3 pivotPoint, Vector3 axis)
     {
         float rollAngle = 0;
-        float targetAngle = isJumping ? 135 : 90; // isJumping이면 180도, 아니면 90도
+        float targetAngle = 90; // isJumping이면 180도, 아니면 90도
 
         while (rollAngle < targetAngle)
         {
@@ -104,6 +164,27 @@ public class PlayerScript : MonoBehaviour
         SpawnEffect(transform.position);
 
         isRolling = false;
+    }
+    System.Collections.IEnumerator JumpCoroutine(Vector3 pivotPoint, Vector3 axis)
+    {
+        float rollAngle = 0;
+        float targetAngle = 90; // isJumping이면 180도, 아니면 90도
+
+        while (rollAngle < targetAngle)
+        {
+            float angleStep = rollSpeed * Time.deltaTime * 90; // 프레임 당 회전각
+            rollAngle += angleStep;
+            if (rollAngle > targetAngle) angleStep -= (rollAngle - targetAngle);
+
+            transform.RotateAround(pivotPoint, axis, angleStep);
+
+            yield return null;
+        }
+
+        // 이동 완료 후 위치 및 회전 보정
+        AlignToGrid();
+        // 이펙트 생성
+        SpawnEffect(transform.position);
     }
     void AlignToGrid()
     {
@@ -138,7 +219,7 @@ public class PlayerScript : MonoBehaviour
         return Mathf.Round(value * 2) / 2.0f;
     }
 
-    private bool IsOnGround()
+    public bool IsOnGround()
     {
         // 바닥 감지 (Raycast 활용)
         return Physics.Raycast(transform.position, gravity > 0 ? Vector3.down : Vector3.up, 1f, groundLayer);
@@ -167,13 +248,24 @@ public class PlayerScript : MonoBehaviour
     {
         // CameraFollow 스크립트 호출하여 카메라 설정 변경
         CameraFollow cameraFollow = FindObjectOfType<CameraFollow>();
+
         // GravityItem 태그를 가진 오브젝트와 충돌 시
-        if (other.CompareTag("GravityItem"))
+        if (other.CompareTag("GravityItem") && !isGravityTiming)
         {
+            isGravityTiming = true;         // 타이머 시작
+            gravityStartTime = Time.time;   // 현재 시간을 기록
             gravity = -gravity;
             gravity = gravity > 0 ? 1.0f : -1.0f;
         }
-        if (other.CompareTag("JumpItem"))
+        if (other.CompareTag("GraivtyArrive") && isGravityTiming)
+        {
+            isGravityTiming = false;        // 타이머 종료
+            float endTime = Time.time;
+            gravityChangeTime = endTime - gravityStartTime; // 경과 시간 계산
+            Debug.Log($"Elapsed Time: {gravityChangeTime} seconds");
+        }
+
+        if (other.CompareTag("JumpItem") && !isJumping && jumpCount < 1)
         {
             isJumping = true;
             StartCoroutine(JumpReset());
@@ -202,13 +294,25 @@ public class PlayerScript : MonoBehaviour
     }
     IEnumerator JumpReset()
     {
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(0.5f);
         isJumping = false;
+        jumpCount = 0;
     }
     // Gravity 값을 외부에서 읽을 수 있도록 제공
     public float Gravity
     {
         get { return gravity; }
     }
-
+    public bool IsJumping
+    {
+        get { return isJumping; }
+    }
+    public bool IsRolling
+    {
+        get { return isRolling; }
+    }
+    public bool IsGravityTiming
+    {
+        get { return isGravityTiming; }
+    }
 }

@@ -9,6 +9,7 @@ TagManager:
   - GravityItem
   - CameraItem
   - CameraItemRe
+  - GraivtyArrive
   layers:
   - Default
   - TransparentFX
