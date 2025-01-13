@@ -7,6 +7,8 @@ TagManager:
   - Floor
   - JumpItem
   - GravityItem
+  - CameraItem
+  - CameraItemRe
   layers:
   - Default
   - TransparentFX

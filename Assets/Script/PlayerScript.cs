@@ -7,6 +7,8 @@ public class PlayerScript : MonoBehaviour
     public float rollSpeed = 2.0f; // 플레이어가 한 칸 구르는 속도
     private bool isRolling = false; // 플레이어가 현재 구르고 있는지 확인
     private bool isJumping = false;
+    bool isCamera = false;
+
 
     private Vector3 targetPosition; // 목표 위치
     private Quaternion targetRotation; // 목표 회전
@@ -24,12 +26,22 @@ public class PlayerScript : MonoBehaviour
     void Update()
     {
         if (isRolling && isJumping) return; // 구르는 중일 때는 입력 차단
-
-        // QEZC 키 입력 감지 및 이동
-        if (Input.GetKeyDown(KeyCode.Q)) Roll(Vector3.forward); // Z축 + 방향
-        else if (Input.GetKeyDown(KeyCode.E)) Roll(Vector3.right); // X축 + 방향
-        else if (Input.GetKeyDown(KeyCode.Z)) Roll(Vector3.left); // X축 - 방향
-        else if (Input.GetKeyDown(KeyCode.C)) Roll(Vector3.back); // Z축 - 방향
+        if (isCamera)
+        {
+            // QEZC 키 입력 감지 및 이동
+            if (Input.GetKeyDown(KeyCode.A)) Roll(Vector3.forward); // Z축 + 방향
+            else if (Input.GetKeyDown(KeyCode.W)) Roll(Vector3.right); // X축 + 방향
+            else if (Input.GetKeyDown(KeyCode.X)) Roll(Vector3.left); // X축 - 방향
+            else if (Input.GetKeyDown(KeyCode.D)) Roll(Vector3.back); // Z축 - 방향
+        }
+        else
+        {
+            // QEZC 키 입력 감지 및 이동
+            if (Input.GetKeyDown(KeyCode.Q)) Roll(Vector3.forward); // Z축 + 방향
+            else if (Input.GetKeyDown(KeyCode.E)) Roll(Vector3.right); // X축 + 방향
+            else if (Input.GetKeyDown(KeyCode.Z)) Roll(Vector3.left); // X축 - 방향
+            else if (Input.GetKeyDown(KeyCode.C)) Roll(Vector3.back); // Z축 - 방향
+        }
 
         // 중력 처리
         if (!IsOnGround())
@@ -153,6 +165,8 @@ public class PlayerScript : MonoBehaviour
     }
     private void OnTriggerEnter(Collider other)
     {
+        // CameraFollow 스크립트 호출하여 카메라 설정 변경
+        CameraFollow cameraFollow = FindObjectOfType<CameraFollow>();
         // GravityItem 태그를 가진 오브젝트와 충돌 시
         if (other.CompareTag("GravityItem"))
         {
@@ -163,6 +177,27 @@ public class PlayerScript : MonoBehaviour
         {
             isJumping = true;
             StartCoroutine(JumpReset());
+        }
+        if (cameraFollow != null)
+        {
+            if (other.CompareTag("CameraItem"))
+            {
+                if (!isCamera)
+                {
+                    // 카메라 시점 변경 (45, 90, 0) / Size 3
+                    cameraFollow.SetCameraView(new Vector3(45, 90, 0), 3f);
+                    isCamera = true; // 상태 업데이트
+                }
+            }
+            else if (other.CompareTag("CameraItemRe"))
+            {
+                if (isCamera)
+                {
+                    // 카메라 시점 초기화 (30, 45, 0) / Size 5
+                    cameraFollow.SetCameraView(new Vector3(30, 45, 0), 5f);
+                    isCamera = false; // 상태 업데이트
+                }
+            }
         }
     }
     IEnumerator JumpReset()

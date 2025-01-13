@@ -8,11 +8,13 @@ public class CameraFollow : MonoBehaviour
     public Vector3 offset = new Vector3(0, 2, 0); // CameraPivot의 초기 상대적 위치
     public float rotationSpeed = 2f; // 회전 전환 속도
     public float offsetTransitionSpeed = 2f; // offset 전환 속도
+    public float transitionSpeed = 2f; // Lerp 전환 속도
 
     private float targetRotationX = 30f; // 목표 X축 회전값
     private float targetOffsetY = 2f; // 목표 offset Y값
     private PlayerScript playerScript; // PlayerScript 참조
 
+    private Coroutine transitionCoroutine; // 카메라 전환 코루틴 참조
     void Start()
     {
         // 플레이어 스크립트 참조 가져오기
@@ -45,5 +47,39 @@ public class CameraFollow : MonoBehaviour
             float newRotationX = Mathf.LerpAngle(currentRotationX, targetRotationX, Time.deltaTime * rotationSpeed);
             transform.rotation = Quaternion.Euler(newRotationX, transform.eulerAngles.y, transform.eulerAngles.z);
         }
+    }
+    public void SetCameraView(Vector3 targetRotation, float targetSize)
+    {
+        if(transitionCoroutine != null)
+        {
+            StopCoroutine(transitionCoroutine);
+        }
+        transitionCoroutine = StartCoroutine(CameraTransition(targetRotation, targetSize));
+    }
+    private IEnumerator CameraTransition(Vector3 targetRotation, float targetSize)
+    {
+        Camera mainCamera = Camera.main;
+        if (mainCamera == null) yield break;
+
+        Quaternion startRotation = transform.rotation;
+        Quaternion endRotation = Quaternion.Euler(targetRotation);
+
+        float startSize = mainCamera.orthographicSize;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < 1f)
+        {
+            elapsedTime += Time.deltaTime * transitionSpeed;
+
+            // Lerp for rotation and size
+            transform.rotation = Quaternion.Lerp(startRotation, endRotation, elapsedTime);
+            mainCamera.orthographicSize = Mathf.Lerp(startSize, targetSize, elapsedTime);
+
+            yield return null;
+        }
+
+        // Ensure final values are set
+        transform.rotation = endRotation;
+        mainCamera.orthographicSize = targetSize;
     }
 }
