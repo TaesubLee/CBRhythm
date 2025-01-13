@@ -170,4 +170,10 @@ public class PlayerScript : MonoBehaviour
         yield return new WaitForSeconds(1f);
         isJumping = false;
     }
+    // Gravity 값을 외부에서 읽을 수 있도록 제공
+    public float Gravity
+    {
+        get { return gravity; }
+    }
+
 }

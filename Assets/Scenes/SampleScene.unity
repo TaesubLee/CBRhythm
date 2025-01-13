@@ -3360,6 +3360,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 561222211}
+  - component: {fileID: 561222212}
   m_Layer: 0
   m_Name: CameraPivot
   m_TagString: Untagged
@@ -3383,6 +3384,22 @@ Transform:
   - {fileID: 963194228}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 30, y: 45, z: 0}
+--- !u!114 &561222212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 561222210}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25a24543cfddd174b9a3a190d0b20cc7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player: {fileID: 658862888949232438}
+  offset: {x: 0, y: 2, z: 0}
+  rotationSpeed: 2
+  offsetTransitionSpeed: 2
 --- !u!1 &585791468
 GameObject:
   m_ObjectHideFlags: 0
@@ -10751,6 +10768,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 973577209}
   m_SourcePrefab: {fileID: 100100000, guid: 0746230f1f8a6004999dae9dafe60f96, type: 3}
+--- !u!4 &658862888949232438 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6491381304502787211, guid: 0746230f1f8a6004999dae9dafe60f96, type: 3}
+  m_PrefabInstance: {fileID: 658862888949232437}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2712340316635887570
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10882,6 +10904,10 @@ PrefabInstance:
     - target: {fileID: 8562408186423788589, guid: a3607b2539adbe54b8740bce4b350cdd, type: 3}
       propertyPath: m_Name
       value: Room
+      objectReference: {fileID: 0}
+    - target: {fileID: 8562408186423788589, guid: a3607b2539adbe54b8740bce4b350cdd, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
