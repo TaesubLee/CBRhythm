@@ -9,7 +9,8 @@ public class PlayerScript : MonoBehaviour
     public float rollSpeed = 2.0f; // 플레이어가 한 칸 구르는 속도
     private bool isRolling = false; // 플레이어가 현재 구르고 있는지 확인
     private bool isJumping = false;
-    bool isCamera = false;
+    private bool isCamera = false;
+    private bool isFalling = false;
 
 
     private Vector3 targetPosition; // 목표 위치
@@ -33,13 +34,16 @@ public class PlayerScript : MonoBehaviour
 
     void Start()
     {
+        // 최대 프레임 레이트를 60으로 설정
+        Application.targetFrameRate = 60;
+
         AlignToGrid(); // 초기 위치 정렬
     }
 
-    void Update()
+    void FixedUpdate()
     {
         // 중력 타이머가 활성화된 동안 ApplyGravity()를 계속 호출
-        if (isGravityTiming)
+        if (isGravityTiming || (!IsOnGround() && !isJumping))
         {
             ApplyGravity();
             return;
@@ -49,51 +53,56 @@ public class PlayerScript : MonoBehaviour
 
         if (isCamera)
         {
-            // QEZC 키 입력 감지 및 이동
-            if (Input.GetKeyDown(KeyCode.A)) Roll(Vector3.forward); // Z축 + 방향
-            else if (Input.GetKeyDown(KeyCode.W)) Roll(Vector3.right); // X축 + 방향
-            else if (Input.GetKeyDown(KeyCode.X)) Roll(Vector3.left); // X축 - 방향
-            else if (Input.GetKeyDown(KeyCode.D)) Roll(Vector3.back); // Z축 - 방향
+            // 카메라 모드일 때의 키 입력
+            HandleCameraInput();
         }
         else
         {
-            if (isJumping)
-            {
-                // QEZC 키 입력 감지 및 이동
-                if (Input.GetKeyDown(KeyCode.Q))
-                {
-                    jumpCount++;
-                    Jump(Vector3.forward); // Z축 + 방향
-                }
-                else if (Input.GetKeyDown(KeyCode.E))
-                {
-                    jumpCount++;
-                    Jump(Vector3.right); // X축 + 방향
-                }
-                else if (Input.GetKeyDown(KeyCode.Z))
-                {
-                    jumpCount++;
-                    Jump(Vector3.left);
-                } // X축 - 방향
-                else if (Input.GetKeyDown(KeyCode.C)) {
-                    jumpCount++;
-                    Jump(Vector3.back);
-                } // Z축 - 방향
-            }
-                                                                          
-            if (Input.GetKeyDown(KeyCode.Q)) Roll(Vector3.forward); // Z축 + 방향
-            else if (Input.GetKeyDown(KeyCode.E)) Roll(Vector3.right); // X축 + 방향
-            else if (Input.GetKeyDown(KeyCode.Z)) Roll(Vector3.left); // X축 - 방향
-            else if (Input.GetKeyDown(KeyCode.C)) Roll(Vector3.back); // Z축 - 방향
-        }
-        
-        // 중력 처리
-        if (!IsOnGround())
-        {
-            ApplyGravity();
+            // 일반 모드일 때의 키 입력
+            HandleNormalInput();
         }
     }
+    void HandleCameraInput()
+    {
+        if (Input.GetKeyDown(KeyCode.A)) Roll(Vector3.forward);
+        else if (Input.GetKeyDown(KeyCode.W)) Roll(Vector3.right);
+        else if (Input.GetKeyDown(KeyCode.X)) Roll(Vector3.left);
+        else if (Input.GetKeyDown(KeyCode.D)) Roll(Vector3.back);
+    }
 
+    void HandleNormalInput()
+    {
+        if (isJumping)
+        {
+            // 점프 모드에서의 키 입력
+            if (Input.GetKeyDown(KeyCode.Q))
+            {
+                jumpCount++;
+                Jump(Vector3.forward);
+            }
+            else if (Input.GetKeyDown(KeyCode.E))
+            {
+                jumpCount++;
+                Jump(Vector3.right);
+            }
+            else if (Input.GetKeyDown(KeyCode.Z))
+            {
+                jumpCount++;
+                Jump(Vector3.left);
+            }
+            else if (Input.GetKeyDown(KeyCode.C))
+            {
+                jumpCount++;
+                Jump(Vector3.back);
+            }
+        }
+
+        // 일반 이동 키 입력
+        if (Input.GetKeyDown(KeyCode.Q)) Roll(Vector3.forward);
+        else if (Input.GetKeyDown(KeyCode.E)) Roll(Vector3.right);
+        else if (Input.GetKeyDown(KeyCode.Z)) Roll(Vector3.left);
+        else if (Input.GetKeyDown(KeyCode.C)) Roll(Vector3.back);
+    }
     void Roll(Vector3 direction)
     {
         isRolling = true;
@@ -221,6 +230,11 @@ public class PlayerScript : MonoBehaviour
 
     public bool IsOnGround()
     {
+        if (isFalling)
+        {
+            gravity = 9.8f;
+            return false;
+        }
         // 바닥 감지 (Raycast 활용)
         return Physics.Raycast(transform.position, gravity > 0 ? Vector3.down : Vector3.up, 1f, groundLayer);
     }
@@ -294,9 +308,13 @@ public class PlayerScript : MonoBehaviour
     }
     IEnumerator JumpReset()
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(2f);
         isJumping = false;
         jumpCount = 0;
+    }
+    public void FallDown()
+    {
+        isFalling = true;
     }
     // Gravity 값을 외부에서 읽을 수 있도록 제공
     public float Gravity
